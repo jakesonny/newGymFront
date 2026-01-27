@@ -1,0 +1,145 @@
+.sidebar {
+  width: 240px;
+  height: 100vh;
+  background-color: #f7f7f5; /* Notion-style light gray */
+  display: flex;
+  flex-direction: column;
+  padding: var(--spacing-lg) var(--spacing-md);
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 100;
+  border-right: 1px solid var(--color-border);
+  overflow-y: auto;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background-color var(--transition-base);
+}
+
+.sidebar-header:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.sidebar-logo {
+  width: 50px;
+  height: 50px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.logo-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.sidebar-branding {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.branding-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  line-height: 1.2;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  flex: 1;
+}
+
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-base);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  position: relative;
+}
+
+/* 아이콘 기본 스타일 */
+.sidebar-nav-item svg {
+  color: var(--color-text-secondary);
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  transition: all var(--transition-base);
+}
+
+.sidebar-nav-item:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: var(--color-text-primary);
+}
+
+.sidebar-nav-item:hover svg {
+  color: var(--color-text-primary);
+  stroke: currentColor;
+}
+
+.sidebar-nav-item.active {
+  background-color: #ef4444; /* Red accent */
+  color: #ffffff;
+}
+
+.sidebar-nav-item.active svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  fill: none;
+}
+
+.sidebar-nav-item.active .sidebar-nav-label {
+  color: #ffffff;
+}
+
+.sidebar-nav-label {
+  color: inherit;
+  transition: color var(--transition-base);
+}
+
+/* 스크롤바 스타일링 */
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-full);
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* 모바일에서 사이드바 숨김 */
+@media (max-width: 768px) {
+  .sidebar {
+    display: none;
+  }
+}
