@@ -93,7 +93,7 @@ export function MemberDetailPage() {
     )
   }
 
-  const { member, hexagonData, oneRepMax } = data
+  const { member, hexagonData } = data
 
   return (
     <Layout>

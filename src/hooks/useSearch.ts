@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 
 interface UseSearchOptions<T> {
   data: T[]
@@ -6,7 +6,7 @@ interface UseSearchOptions<T> {
   debounceMs?: number
 }
 
-export function useSearch<T>({ data, searchFields, debounceMs = 0 }: UseSearchOptions<T>) {
+export function useSearch<T>({ data, searchFields }: UseSearchOptions<T>) {
   const [searchQuery, setSearchQuery] = useState('')
 
   const filteredData = useMemo(() => {

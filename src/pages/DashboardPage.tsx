@@ -1,7 +1,7 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
-import { Layout, Card, Button, MetricCard, Loading, ErrorMessage } from '@/components'
+import { Layout, Card, Button, MetricCard } from '@/components'
 import { Dumbbell, UtensilsCrossed, Lightbulb } from 'lucide-react'
 import './DashboardPage.css'
 

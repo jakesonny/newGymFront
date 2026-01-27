@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { TrendingUp, User, Check, Dumbbell, Flame, UserCircle } from 'lucide-react'
+import { TrendingUp, User, Check, Flame, UserCircle } from 'lucide-react'
 import { strengthLevelService } from '@/services/strength-level.service'
-import { Layout, Card, Input, ErrorMessage, PageHeader } from '@/components'
+import { Layout, Card, ErrorMessage, PageHeader } from '@/components'
 import { getErrorMessage } from '@/utils/errorHandler'
 import type { StrengthLevelData } from '@/types'
 import './StrengthLevelPage.css'
@@ -9,39 +9,19 @@ import './StrengthLevelPage.css'
 export function StrengthLevelPage() {
   const [exerciseType, setExerciseType] = useState<'BENCH_PRESS' | 'SQUAT' | 'DEADLIFT'>('BENCH_PRESS')
   const [age, setAge] = useState(30)
-  const [ageInput, setAgeInput] = useState('30')
   const [bodyWeight, setBodyWeight] = useState(75)
-  const [bodyWeightInput, setBodyWeightInput] = useState('75')
   const [gender, setGender] = useState<'MALE' | 'FEMALE'>('MALE')
   const [currentWeight, setCurrentWeight] = useState<number | undefined>(undefined)
   const [currentWeightInput, setCurrentWeightInput] = useState('')
   const [result, setResult] = useState<StrengthLevelData | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const exerciseNames = {
     BENCH_PRESS: '벤치프레스',
     SQUAT: '스쿼트',
     DEADLIFT: '데드리프트',
-  }
-
-  // 나이 입력 필드 핸들러
-  const handleAgeInputChange = (value: string) => {
-    setAgeInput(value)
-    const numValue = Number(value)
-    if (!isNaN(numValue) && numValue >= 15 && numValue <= 80) {
-      setAge(numValue)
-    }
-  }
-
-  // 체중 입력 필드 핸들러
-  const handleBodyWeightInputChange = (value: string) => {
-    setBodyWeightInput(value)
-    const numValue = Number(value)
-    if (!isNaN(numValue) && numValue >= 40 && numValue <= 140) {
-      setBodyWeight(numValue)
-    }
   }
 
   // 현재 무게 입력 필드 핸들러
@@ -55,15 +35,12 @@ export function StrengthLevelPage() {
     }
   }
 
-  // 슬라이더 변경 시 입력 필드 동기화
   const handleAgeSliderChange = (value: number) => {
     setAge(value)
-    setAgeInput(String(value))
   }
 
   const handleBodyWeightSliderChange = (value: number) => {
     setBodyWeight(value)
-    setBodyWeightInput(String(value))
   }
 
   // 자동 계산 함수 (디바운스 적용)
@@ -222,11 +199,7 @@ export function StrengthLevelPage() {
                   min="15"
                   max="80"
                   value={age}
-                  onChange={(e) => {
-                    const value = Number(e.target.value)
-                    handleAgeSliderChange(value)
-                    setAgeInput(String(value))
-                  }}
+                  onChange={(e) => handleAgeSliderChange(Number(e.target.value))}
                   className="slider-image-style"
                 />
                 <div className="slider-range-labels">
@@ -248,11 +221,7 @@ export function StrengthLevelPage() {
                   min="40"
                   max="140"
                   value={bodyWeight}
-                  onChange={(e) => {
-                    const value = Number(e.target.value)
-                    handleBodyWeightSliderChange(value)
-                    setBodyWeightInput(String(value))
-                  }}
+                  onChange={(e) => handleBodyWeightSliderChange(Number(e.target.value))}
                   className="slider-image-style"
                 />
                 <div className="slider-range-labels">

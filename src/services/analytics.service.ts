@@ -1,5 +1,5 @@
 import { api } from './api'
-import type { ApiResponse, MemberAnalytics, HexagonData } from '@/types'
+import type { ApiResponse, MemberAnalytics } from '@/types'
 
 export const analyticsService = {
   async getAverages() {

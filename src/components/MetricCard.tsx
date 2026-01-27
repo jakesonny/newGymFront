@@ -1,4 +1,4 @@
-import { ReactNode, memo } from 'react'
+import { memo } from 'react'
 import { TrendingUp, TrendingDown, LucideIcon } from 'lucide-react'
 import { Card } from './Card'
 import './MetricCard.css'
