@@ -98,7 +98,7 @@ export const workoutRecordsService = {
         `/members/${memberId}/workout-records/one-rep-max`,
         { params: { type } }
       )
-      return response.data?.data || null
+      return extractApiData(response, '1RM 데이터를 불러올 수 없습니다.')
     } catch (error) {
       // 404 에러 (데이터 없음) 시 조용히 null 반환
       if (error && typeof error === 'object' && 'response' in error) {

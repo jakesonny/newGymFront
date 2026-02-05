@@ -49,21 +49,19 @@ export interface AbilitySnapshot {
 
 export interface HexagonData {
   indicators: {
-    lowerBodyStrength: number
-    cardiorespiratoryEndurance: number
-    muscularEndurance: number
-    flexibility: number
-    bodyComposition: number
-    stability: number
+    lowerBodyStrength: number | null
+    cardiorespiratoryEndurance: number | null
+    muscularEndurance: number | null
+    flexibility: number | null
+    bodyComposition: number | null
+    stability: number | null
   }
-  initialIndicators?: {
-    lowerBodyStrength: number
-    cardiorespiratoryEndurance: number
-    muscularEndurance: number
-    flexibility: number
-    bodyComposition: number
-    stability: number
-  }
+  /** compare=true일 때 초기 평가 데이터 */
+  initial?: {
+    indicators: HexagonData['indicators']
+    assessedAt: string
+    version: string
+  } | null
 }
 
 export interface GoalAnalyst {

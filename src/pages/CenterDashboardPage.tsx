@@ -1,10 +1,11 @@
 import { useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { TrendingUp, AlertCircle, Clock, Flame, Dumbbell, HeartPulse, ChevronRight } from 'lucide-react'
+import { TrendingUp, AlertCircle, Clock, ChevronRight } from 'lucide-react'
 import { insightsService } from '@/services/insights.service'
 import { Layout, Card, Loading, ErrorMessage, PageHeader, SearchInput, StatusBadge } from '@/components'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import { useSearch } from '@/hooks/useSearch'
+import { getGoalLabel, getGoalIcon, getGoalClassName } from '@/utils/goalUtils'
 import type { CenterDashboard } from '@/types'
 import './CenterDashboardPage.css'
 
@@ -23,37 +24,6 @@ export function CenterDashboardPage() {
     data: data?.memberList || [],
     searchFields: ['name'],
   })
-
-  // GoalType에 따른 아이콘과 라벨 매핑
-  const getGoalIcon = (goalType: string | null) => {
-    switch (goalType) {
-      case 'WEIGHT_LOSS':
-        return <Flame size={18} className="goal-icon weight-loss" />
-      case 'STRENGTH_UP':
-        return <Dumbbell size={18} className="goal-icon strength-up" />
-      case 'ENDURANCE':
-        return <HeartPulse size={18} className="goal-icon endurance" />
-      case 'MAINTENANCE':
-        return <TrendingUp size={18} className="goal-icon maintenance" />
-      default:
-        return null
-    }
-  }
-
-  const getGoalLabel = (goalType: string | null) => {
-    switch (goalType) {
-      case 'WEIGHT_LOSS':
-        return '체중 감량'
-      case 'STRENGTH_UP':
-        return '근력 상승'
-      case 'ENDURANCE':
-        return '체력 증진'
-      case 'MAINTENANCE':
-        return '유지'
-      default:
-        return '-'
-    }
-  }
 
   // 진행도 계산 (D-남은일수)
   const calculateDaysRemaining = useCallback((member: CenterDashboard['memberList'][0]) => {
@@ -97,11 +67,28 @@ export function CenterDashboardPage() {
               <TrendingUp size={24} />
             </div>
             <div className="summary-content">
+              <div className="summary-label">전체 회원</div>
+              <div className="summary-value">{data.summary.totalMembers}명</div>
+            </div>
+          </Card>
+          <Card className="summary-card">
+            <div className="summary-icon">
+              <TrendingUp size={24} />
+            </div>
+            <div className="summary-content">
+              <div className="summary-label">활동 회원</div>
+              <div className="summary-value">{data.summary.activeMembers}명</div>
+            </div>
+          </Card>
+          <Card className="summary-card">
+            <div className="summary-icon">
+              <TrendingUp size={24} />
+            </div>
+            <div className="summary-content">
               <div className="summary-label">평균 달성률</div>
               <div className="summary-value">{data.summary.averageProgress}%</div>
             </div>
           </Card>
-
           <Card className="summary-card">
             <div className="summary-icon danger">
               <AlertCircle size={24} />
@@ -111,7 +98,6 @@ export function CenterDashboardPage() {
               <div className="summary-value">{data.summary.riskCounts.red}명</div>
             </div>
           </Card>
-
           <Card className="summary-card">
             <div className="summary-icon warning">
               <Clock size={24} />
@@ -155,7 +141,11 @@ export function CenterDashboardPage() {
                 >
                   <div className="table-cell">{member.name}</div>
                   <div className="table-cell goal-cell">
-                    {getGoalIcon(member.program?.mainGoalType || null)}
+                    {(() => {
+                      const goalType = member.program?.mainGoalType || null
+                      const Icon = getGoalIcon(goalType)
+                      return Icon ? <Icon size={18} className={`goal-icon ${getGoalClassName(goalType)}`} /> : null
+                    })()}
                     <span>{getGoalLabel(member.program?.mainGoalType || null)}</span>
                   </div>
                   <div className="table-cell">

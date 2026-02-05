@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Users, BarChart3, Dumbbell } from 'lucide-react'
+import { LayoutDashboard, Users, Dumbbell } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import logoImage from '@/img/스트롱살롱.jpg'
 import './Sidebar.css'
@@ -13,8 +13,8 @@ export function Sidebar() {
     navigate('/')
   }
 
+  // 대시보드 → 회원 관리 → 레벨 측정기 (센터 대시보드는 회원 관리 페이지에 통합됨)
   const navItems = [
-    { path: '/center-dashboard', icon: BarChart3, label: '센터 대시보드', requireRole: 'ADMIN' },
     { path: '/dashboard', icon: LayoutDashboard, label: '대시보드' },
     { path: '/members', icon: Users, label: '회원 관리', requireRole: 'ADMIN' },
     { path: '/strength-level', icon: Dumbbell, label: '레벨 측정기' },

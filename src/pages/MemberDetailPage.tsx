@@ -9,6 +9,7 @@ import { workoutRecordsService } from '@/services/workout-records.service'
 import { Layout, Card, Button, Loading, ErrorMessage, MetricCard, PageHeader, StatusBadge, Input } from '@/components'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import { getErrorMessage } from '@/utils/errorHandler'
+import { getGoalLabel } from '@/utils/goalUtils'
 import type { Member, Membership, HexagonData, MajorExercisesOneRepMaxResponse } from '@/types'
 import './MemberDetailPage.css'
 
@@ -62,19 +63,14 @@ export function MemberDetailPage() {
     enabled: !!memberId,
   })
 
-  // useMemo를 컴포넌트 최상단으로 이동 (조건부 return 전에)
   const strengthItems = useMemo(() => {
     if (!data) return [{ label: '데이터 없음', value: '-' }]
-    
     const items: Array<{ label: string; value: string }> = []
     const { oneRepMax } = data
-    
-    // 백엔드 응답 형식: { exercises: [...] }
     if (oneRepMax && 'exercises' in oneRepMax) {
       oneRepMax.exercises.forEach((exercise) => {
         if (exercise.current) {
           const exerciseName = exercise.exerciseName
-          // 벤치프레스, 스쿼트, 데드리프트만 표시
           if (exerciseName.includes('벤치') || exerciseName.includes('Bench')) {
             items.push({ label: 'BENCH', value: `${exercise.current.oneRepMax}kg` })
           } else if (exerciseName.includes('스쿼트') || exerciseName.includes('Squat')) {
@@ -87,6 +83,49 @@ export function MemberDetailPage() {
     }
     return items.length > 0 ? items : [{ label: '데이터 없음', value: '-' }]
   }, [data?.oneRepMax])
+
+  const bodyItems = useMemo(() => {
+    if (!data?.member) return [{ label: '데이터 없음', value: '-' }]
+    const m = data.member
+    const items: Array<{ label: string; value: string }> = []
+    if (m.weight != null) items.push({ label: '체중', value: `${m.weight}kg` })
+    return items.length > 0 ? items : [{ label: '데이터 없음', value: '-' }]
+  }, [data?.member])
+
+  const conditioningItems = useMemo(() => {
+    if (!data?.hexagonData) return [{ label: '데이터 없음', value: '-' }]
+    const h = data.hexagonData.indicators
+    const items: Array<{ label: string; value: string }> = []
+    if (h.cardiorespiratoryEndurance != null) {
+      items.push({ label: '심폐 지구력', value: `${Math.round(h.cardiorespiratoryEndurance)}점` })
+    }
+    if (h.muscularEndurance != null) {
+      items.push({ label: '근지구력', value: `${Math.round(h.muscularEndurance)}점` })
+    }
+    return items.length > 0 ? items : [{ label: '데이터 없음', value: '-' }]
+  }, [data?.hexagonData])
+
+  const metricScores = useMemo((): { body: number | null; strength: number | null; conditioning: number | null } => {
+    if (!data?.hexagonData) {
+      return { body: null, strength: null, conditioning: null }
+    }
+    const h = data.hexagonData.indicators
+    const cardio = h.cardiorespiratoryEndurance
+    const endurance = h.muscularEndurance
+    const conditioningValue =
+      cardio != null && endurance != null
+        ? Math.round((cardio + endurance) / 2)
+        : cardio != null
+          ? Math.round(cardio)
+          : endurance != null
+            ? Math.round(endurance)
+            : null
+    return {
+      body: h.bodyComposition != null ? Math.round(h.bodyComposition) : null,
+      strength: h.lowerBodyStrength != null ? Math.round(h.lowerBodyStrength) : null,
+      conditioning: conditioningValue,
+    }
+  }, [data?.hexagonData])
 
   if (isLoading) {
     return (
@@ -138,23 +177,10 @@ export function MemberDetailPage() {
     goalTrainerComment: member.goalTrainerComment || goal?.trainerComment || null,
   }
 
-  // GoalType에 따른 라벨
-  const getGoalTypeLabel = (goalType: string | null | undefined) => {
-    switch (goalType) {
-      case 'WEIGHT_LOSS':
-        return '체중 감량'
-      case 'STRENGTH_UP':
-        return '근력 상승'
-      case 'ENDURANCE':
-        return '체력 증진'
-      case 'MAINTENANCE':
-        return '유지'
-      default:
-        return goalInfo.goal || '목표 없음'
-    }
-  }
-
-  const goalTypeLabel = getGoalTypeLabel(activeMembership?.mainGoalType)
+  const goalTypeLabel = (() => {
+    const label = getGoalLabel(activeMembership?.mainGoalType ?? null)
+    return label === '-' ? (goalInfo.goal || '목표 없음') : label
+  })()
 
   return (
     <Layout>
@@ -251,12 +277,12 @@ export function MemberDetailPage() {
                 <div className="hexagon-container">
                   {/* 헥사곤 차트는 추후 구현 */}
                   <div className="hexagon-placeholder">
-                    <div className="hexagon-label">하체 근력: {hexagonData.indicators.lowerBodyStrength}</div>
-                    <div className="hexagon-label">심폐 지구력: {hexagonData.indicators.cardiorespiratoryEndurance}</div>
-                    <div className="hexagon-label">근지구력: {hexagonData.indicators.muscularEndurance}</div>
-                    <div className="hexagon-label">유연성: {hexagonData.indicators.flexibility}</div>
-                    <div className="hexagon-label">체성분: {hexagonData.indicators.bodyComposition}</div>
-                    <div className="hexagon-label">안정성: {hexagonData.indicators.stability}</div>
+                    <div className="hexagon-label">하체 근력: {hexagonData.indicators.lowerBodyStrength ?? '—'}</div>
+                    <div className="hexagon-label">심폐 지구력: {hexagonData.indicators.cardiorespiratoryEndurance ?? '—'}</div>
+                    <div className="hexagon-label">근지구력: {hexagonData.indicators.muscularEndurance ?? '—'}</div>
+                    <div className="hexagon-label">유연성: {hexagonData.indicators.flexibility ?? '—'}</div>
+                    <div className="hexagon-label">체성분: {hexagonData.indicators.bodyComposition ?? '—'}</div>
+                    <div className="hexagon-label">안정성: {hexagonData.indicators.stability ?? '—'}</div>
                   </div>
                 </div>
               ) : (
@@ -269,37 +295,29 @@ export function MemberDetailPage() {
             <div className="metric-cards-grid">
               <MetricCard
                 title="BODY (체성분)"
-                score={78}
-                trend="up"
+                score={metricScores.body}
+                trend={metricScores.body != null ? (metricScores.body >= 70 ? 'up' : metricScores.body >= 50 ? 'stable' : 'down') : undefined}
                 icon={Heart}
-                items={[
-                  { label: '체중', value: '80kg → 79.5kg' },
-                  { label: '골격근', value: '37.2kg → 37.5kg' },
-                  { label: '체지방', value: '18% → 16%' },
-                ]}
-                borderColor="success"
+                items={bodyItems}
+                borderColor={metricScores.body != null ? (metricScores.body >= 70 ? 'success' : metricScores.body >= 50 ? 'warning' : 'danger') : 'primary'}
               />
 
               <MetricCard
                 title="STRENGTH (근력)"
-                score={85}
-                trend="up"
+                score={metricScores.strength}
+                trend={metricScores.strength != null ? (metricScores.strength >= 70 ? 'up' : metricScores.strength >= 50 ? 'stable' : 'down') : undefined}
                 icon={Activity}
                 items={strengthItems}
-                borderColor="success"
+                borderColor={metricScores.strength != null ? (metricScores.strength >= 70 ? 'success' : metricScores.strength >= 50 ? 'warning' : 'danger') : 'primary'}
               />
 
               <MetricCard
                 title="CONDITIONING (체력)"
-                score={62}
-                trend="down"
+                score={metricScores.conditioning}
+                trend={metricScores.conditioning != null ? (metricScores.conditioning >= 70 ? 'up' : metricScores.conditioning >= 50 ? 'stable' : 'down') : undefined}
                 icon={Activity}
-                items={[
-                  { label: '로잉', value: '110s → 105s' },
-                  { label: '러닝', value: '9.5m → 8.3m' },
-                  { label: '버피', value: '28회 → 32회' },
-                ]}
-                borderColor="danger"
+                items={conditioningItems}
+                borderColor={metricScores.conditioning != null ? (metricScores.conditioning >= 70 ? 'success' : metricScores.conditioning >= 50 ? 'warning' : 'danger') : 'primary'}
               />
             </div>
 
