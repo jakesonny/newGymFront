@@ -141,21 +141,40 @@ export function NewMemberPage() {
 
   const handleNext = () => {
     if (step === 1) {
-      if (!formData.name || !formData.phone || !formData.email) {
-        setError('필수 항목을 모두 입력해주세요.')
+      // 필수 항목: 이름, 전화번호만 (이메일은 optional)
+      if (!formData.name || !formData.phone) {
+        setError('이름과 전화번호는 필수 항목입니다.')
+        return
+      }
+      // 이메일 형식 검증 (입력된 경우에만)
+      if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+        setError('올바른 이메일 형식이 아닙니다.')
         return
       }
     }
     if (step === 2) {
-      // PT 회원권인 경우 골타입 필수
-      if (isPTMembership && !formData.membership?.mainGoalType) {
-        setError('PT 회원권은 목표 유형을 선택해야 합니다.')
-        return
-      }
-      // 일반 회원권인 경우 만료일 필수
-      if (isRegularMembership && !formData.membership?.expiryDate) {
-        setError('일반 회원권은 만료일이 필요합니다.')
-        return
+      // 회원권이 선택된 경우에만 검증
+      if (formData.membership) {
+        // PT 회원권인 경우 골타입 필수
+        if (isPTMembership && !formData.membership.mainGoalType) {
+          setError('PT 회원권은 목표 유형을 선택해야 합니다.')
+          return
+        }
+        // PT 회원권인 경우 PT 총 횟수 권장 (선택사항이지만 입력 권장)
+        if (isPTMembership && (!formData.membership.ptTotalCount || formData.membership.ptTotalCount <= 0)) {
+          const confirm = window.confirm('PT 총 횟수가 입력되지 않았습니다. 계속 진행하시겠습니까?')
+          if (!confirm) return
+        }
+        // 일반 회원권인 경우 만료일 필수
+        if (isRegularMembership && !formData.membership.expiryDate) {
+          setError('일반 회원권은 만료일이 필요합니다.')
+          return
+        }
+        // 가격 검증
+        if (!formData.membership.price || formData.membership.price <= 0) {
+          setError('가격을 입력해주세요.')
+          return
+        }
       }
     }
     setError('')
@@ -235,11 +254,11 @@ export function NewMemberPage() {
 
                 <Input
                   label="이메일"
-                  type="text"
-                  placeholder="email@example.com"
-                  value={formData.email}
-                  onChange={(e) => handleChange('email', e.target.value)}
-                  required
+                  type="email"
+                  placeholder="email@example.com (선택사항)"
+                  value={formData.email || ''}
+                  onChange={(e) => handleChange('email', e.target.value || undefined)}
+                  helperText="이메일은 선택사항입니다. PT 회원이 아닌 경우 생략 가능합니다."
                 />
 
                 <div className="input-group">
@@ -417,7 +436,19 @@ export function NewMemberPage() {
                       type="number"
                       placeholder="24"
                       value={formData.membership?.ptTotalCount || ''}
-                      onChange={(e) => handleMembershipChange('ptTotalCount', e.target.value ? Number(e.target.value) : undefined)}
+                      onChange={(e) => {
+                        const value = e.target.value
+                        if (value === '') {
+                          handleMembershipChange('ptTotalCount', undefined)
+                        } else {
+                          const numValue = Number(value)
+                          if (numValue > 0) {
+                            handleMembershipChange('ptTotalCount', numValue)
+                          }
+                        }
+                      }}
+                      min="1"
+                      helperText="PT 회원권의 총 세션 횟수를 입력하세요. (선택사항)"
                     />
                   </>
                 )}

@@ -12,6 +12,9 @@ export interface Membership {
   targetValue?: number
   targetUnit?: string
   startValue?: number
+  currentValue?: number
+  currentProgress?: number
+  riskStatus?: 'FOUNDATION' | 'GREEN' | 'YELLOW' | 'RED'
   ptTotalCount?: number
   createdAt: string
   updatedAt: string
@@ -31,7 +34,12 @@ export interface Member {
   joinDate: string
   createdAt: string
   updatedAt: string
-  memberships?: Membership[] // 회원권 정보 (optional)
+  memberships?: Membership[]
+  goal?: string
+  goalProgress?: number
+  goalTrainerComment?: string
+  totalSessions?: number
+  completedSessions?: number
 }
 
 export interface CreateMemberDto {

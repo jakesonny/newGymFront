@@ -6,7 +6,6 @@ import { RegisterPage } from './pages/RegisterPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { MembersPage } from './pages/MembersPage'
 import { MemberDetailPage } from './pages/MemberDetailPage'
-import { NewMemberPage } from './pages/NewMemberPage'
 import { GoalAnalystPage } from './pages/GoalAnalystPage'
 import { CenterDashboardPage } from './pages/CenterDashboardPage'
 import { StrengthLevelPage } from './pages/StrengthLevelPage'
@@ -39,7 +38,7 @@ function App() {
             path="/members/new"
             element={
               <ProtectedRoute requireRole="ADMIN">
-                <NewMemberPage />
+                <Navigate to="/members" state={{ openNewMemberModal: true }} replace />
               </ProtectedRoute>
             }
           />

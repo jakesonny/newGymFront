@@ -1,23 +1,31 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Target, Heart, Activity } from 'lucide-react'
+import { Target, Heart, Activity, User } from 'lucide-react'
 import { membersService } from '@/services/members.service'
+import { membershipsService } from '@/services/memberships.service'
+import { ptSessionsService } from '@/services/pt-sessions.service'
 import { abilitiesService } from '@/services/abilities.service'
 import { workoutRecordsService } from '@/services/workout-records.service'
-import { Layout, Card, Button, Loading, ErrorMessage, MetricCard, PageHeader, StatusBadge } from '@/components'
+import { Layout, Card, Button, Loading, ErrorMessage, MetricCard, PageHeader, StatusBadge, Input } from '@/components'
 import { useAsyncData } from '@/hooks/useAsyncData'
-import type { Member, HexagonData, MajorExercisesOneRepMaxResponse } from '@/types'
+import { getErrorMessage } from '@/utils/errorHandler'
+import type { Member, Membership, HexagonData, MajorExercisesOneRepMaxResponse } from '@/types'
 import './MemberDetailPage.css'
+
+type DetailTab = 'summary' | 'baseline'
 
 interface MemberDetailData {
   member: Member
   hexagonData: HexagonData | null
   oneRepMax: MajorExercisesOneRepMaxResponse | null
+  dashboard: import('@/types').Dashboard | null
+  goal: import('@/types').Goal | null
 }
 
 export function MemberDetailPage() {
   const { memberId } = useParams<{ memberId: string }>()
   const navigate = useNavigate()
+  const [activeTab, setActiveTab] = useState<DetailTab>('summary')
 
   const fetchMemberDetail = useCallback(async (): Promise<MemberDetailData> => {
     if (!memberId) throw new Error('회원 ID가 필요합니다.')
@@ -27,6 +35,8 @@ export function MemberDetailPage() {
       membersService.getById(memberId),
       abilitiesService.getHexagon(memberId, true), // 404 에러 시 null 반환
       workoutRecordsService.getOneRepMax(memberId, 'major'), // type='major'는 MajorExercisesOneRepMaxResponse 반환
+      membersService.getDashboard(memberId).catch(() => null), // Dashboard (선택)
+      membersService.getGoal(memberId).catch(() => null), // Goal (선택)
     ])
     
     // member는 필수이므로 실패하면 에러
@@ -40,9 +50,10 @@ export function MemberDetailPage() {
     const oneRepMaxResult = results[2].status === 'fulfilled' ? results[2].value : null
     const oneRepMax: MajorExercisesOneRepMaxResponse | null = 
       oneRepMaxResult && 'exercises' in oneRepMaxResult ? (oneRepMaxResult as MajorExercisesOneRepMaxResponse) : null
+    const dashboard = results[3].status === 'fulfilled' ? results[3].value : null
+    const goal = results[4].status === 'fulfilled' ? results[4].value ?? null : null
 
-    
-    return { member, hexagonData, oneRepMax }
+    return { member, hexagonData, oneRepMax, dashboard, goal }
   }, [memberId])
 
   const { data, isLoading, error, refetch } = useAsyncData<MemberDetailData>({
@@ -93,7 +104,57 @@ export function MemberDetailPage() {
     )
   }
 
-  const { member, hexagonData } = data
+  const { member, hexagonData, dashboard, goal } = data
+
+  // 활성 회원권 정보 가져오기
+  const activeMembership = member.memberships?.find(
+    (m) => m.status === 'ACTIVE' || !m.status
+  )
+
+  // RiskStatus 결정 (membership의 riskStatus 또는 기본값)
+  const riskStatus = activeMembership?.riskStatus || 'FOUNDATION'
+
+  // 프로그램 정보
+  const durationWeeks = activeMembership?.durationWeeks
+  const programInfo = durationWeeks
+    ? `${durationWeeks}주 프로그램`
+    : '프로그램 없음'
+
+  // 세션 진행률 (dashboard 또는 member에서)
+  const sessionProgress = dashboard?.sessionProgress || {
+    totalSessions: member.totalSessions || 0,
+    completedSessions: member.completedSessions || 0,
+    progressPercentage: 0,
+  }
+
+  const sessionInfo = sessionProgress.totalSessions > 0
+    ? `${sessionProgress.completedSessions}회차 / ${sessionProgress.totalSessions}회 (${sessionProgress.progressPercentage}%)`
+    : '세션 정보 없음'
+
+  // Goal 정보 (dashboard 또는 goal에서)
+  const goalInfo = dashboard?.goal || {
+    goal: member.goal || goal?.goalType || null,
+    goalProgress: member.goalProgress || goal?.progress || 0,
+    goalTrainerComment: member.goalTrainerComment || goal?.trainerComment || null,
+  }
+
+  // GoalType에 따른 라벨
+  const getGoalTypeLabel = (goalType: string | null | undefined) => {
+    switch (goalType) {
+      case 'WEIGHT_LOSS':
+        return '체중 감량'
+      case 'STRENGTH_UP':
+        return '근력 상승'
+      case 'ENDURANCE':
+        return '체력 증진'
+      case 'MAINTENANCE':
+        return '유지'
+      default:
+        return goalInfo.goal || '목표 없음'
+    }
+  }
+
+  const goalTypeLabel = getGoalTypeLabel(activeMembership?.mainGoalType)
 
   return (
     <Layout>
@@ -102,10 +163,39 @@ export function MemberDetailPage() {
           title={`${member.name} 회원님`}
           backTo="/members"
         />
+
+        <div className="member-detail-tabs">
+          <button
+            type="button"
+            className={`member-detail-tab ${activeTab === 'summary' ? 'active' : ''}`}
+            onClick={() => setActiveTab('summary')}
+          >
+            요약
+          </button>
+          <button
+            type="button"
+            className={`member-detail-tab ${activeTab === 'baseline' ? 'active' : ''}`}
+            onClick={() => setActiveTab('baseline')}
+          >
+            초기 측정
+          </button>
+        </div>
+
+        {activeTab === 'baseline' && (
+          <BaselineTab
+            memberId={memberId!}
+            member={member}
+            activeMembership={activeMembership}
+            onSaved={refetch}
+          />
+        )}
+
+        {activeTab === 'summary' && (
+          <>
         <div className="member-meta">
-          <StatusBadge status="GREEN" type="risk" />
-          <span>① 12주 프로그램</span>
-          <span>6주차 / 12주 (50%)</span>
+          <StatusBadge status={riskStatus as 'FOUNDATION' | 'GREEN' | 'YELLOW' | 'RED'} type="risk" />
+          {durationWeeks && <span>① {programInfo}</span>}
+          <span>{sessionInfo}</span>
         </div>
 
         <div className="progress-roadmap">
@@ -134,9 +224,20 @@ export function MemberDetailPage() {
               </div>
               <div className="goal-info">
                 <div className="goal-label">MAIN GOAL</div>
-                <div className="goal-title">체중 감량</div>
-                <div className="goal-detail">체지방 10kg 감량</div>
-                <div className="goal-progress">85% 달성</div>
+                <div className="goal-title">{goalTypeLabel}</div>
+                {goalInfo.goal && (
+                  <div className="goal-detail">{goalInfo.goal}</div>
+                )}
+                {activeMembership?.targetValue && activeMembership?.targetUnit && (
+                  <div className="goal-detail">
+                    목표: {activeMembership.targetValue}{activeMembership.targetUnit}
+                    {activeMembership.startValue && ` (시작: ${activeMembership.startValue}${activeMembership.targetUnit})`}
+                  </div>
+                )}
+                <div className="goal-progress">{goalInfo.goalProgress}% 달성</div>
+                {goalInfo.goalTrainerComment && (
+                  <div className="goal-comment">{goalInfo.goalTrainerComment}</div>
+                )}
               </div>
             </div>
           </Card>
@@ -212,7 +313,190 @@ export function MemberDetailPage() {
             </div>
           </div>
         </div>
+          </>
+        )}
       </div>
     </Layout>
+  )
+}
+
+interface BaselineTabProps {
+  memberId: string
+  member: Member
+  activeMembership: Membership | undefined
+  onSaved: () => void
+}
+
+function BaselineTab({ memberId, member, activeMembership, onSaved }: BaselineTabProps) {
+  const [weight, setWeight] = useState<number | ''>(member.weight ?? '')
+  const [startValue, setStartValue] = useState<number | ''>(activeMembership?.startValue ?? '')
+  const [currentValue, setCurrentValue] = useState<number | ''>(activeMembership?.currentValue ?? '')
+  const [muscleMass, setMuscleMass] = useState<number | ''>('')
+  const [bodyFat, setBodyFat] = useState<number | ''>('')
+  const [benchPress1RM, setBenchPress1RM] = useState<number | ''>('')
+  const [squat1RM, setSquat1RM] = useState<number | ''>('')
+  const [deadlift1RM, setDeadlift1RM] = useState<number | ''>('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState(false)
+
+  const handleSave = async () => {
+    setIsLoading(true)
+    setError('')
+    setSuccess(false)
+    try {
+      await membersService.update(memberId, {
+        weight: weight === '' ? undefined : Number(weight),
+      })
+
+      if (activeMembership?.id) {
+        const updates: { startValue?: number; currentValue?: number } = {}
+        if (startValue !== '') updates.startValue = Number(startValue)
+        if (currentValue !== '') updates.currentValue = Number(currentValue)
+        if (Object.keys(updates).length > 0) {
+          await membershipsService.updateMembership(memberId, activeMembership.id, updates)
+        }
+
+        const hasMeasurements =
+          muscleMass !== '' || bodyFat !== '' || benchPress1RM !== '' || squat1RM !== '' || deadlift1RM !== ''
+        const weightNum = weight === '' ? undefined : Number(weight)
+        if (hasMeasurements || weightNum !== undefined) {
+          await ptSessionsService.create(memberId, {
+            sessionDate: new Date().toISOString().split('T')[0],
+            mainContent: '초기 측정 (Baseline)',
+            membershipId: activeMembership.id,
+            measuredWeight: weightNum,
+            measuredMuscleMass: muscleMass === '' ? undefined : Number(muscleMass),
+            measuredBodyFat: bodyFat === '' ? undefined : Number(bodyFat),
+            benchPress1RM: benchPress1RM === '' ? undefined : Number(benchPress1RM),
+            squat1RM: squat1RM === '' ? undefined : Number(squat1RM),
+            deadlift1RM: deadlift1RM === '' ? undefined : Number(deadlift1RM),
+          })
+        }
+      }
+
+      setSuccess(true)
+      onSaved()
+    } catch (err) {
+      setError(getErrorMessage(err, '저장에 실패했습니다.'))
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return (
+    <Card className="baseline-tab-card">
+      <h2 className="section-title">
+        <User size={24} />
+        초기 측정 (Baseline)
+      </h2>
+      <p className="baseline-description">
+        회원의 현재 상태를 입력하세요. 미입력 시 0으로 처리되며, PT 회원은 시작/현재 수치가 진행률에 반영됩니다.
+      </p>
+
+      {error && <ErrorMessage message={error} />}
+      {success && <p className="baseline-success">저장되었습니다.</p>}
+
+      <div className="baseline-form">
+        <div className="baseline-section">
+          <h3 className="baseline-section-title">Body (신체)</h3>
+          <div className="baseline-fields">
+            <Input
+              label="체중 (kg)"
+              type="number"
+              placeholder="0"
+              value={weight === '' ? '' : weight}
+              onChange={(e) => setWeight(e.target.value === '' ? '' : Number(e.target.value))}
+              min={0}
+              step="0.1"
+            />
+            <Input
+              label="골격근량 (kg)"
+              type="number"
+              placeholder="0 (선택)"
+              value={muscleMass}
+              onChange={(e) => setMuscleMass(e.target.value === '' ? '' : Number(e.target.value))}
+              min={0}
+              step="0.1"
+            />
+            <Input
+              label="체지방률 (%)"
+              type="number"
+              placeholder="0 (선택)"
+              value={bodyFat}
+              onChange={(e) => setBodyFat(e.target.value === '' ? '' : Number(e.target.value))}
+              min={0}
+              max={100}
+              step="0.1"
+            />
+          </div>
+        </div>
+
+        {activeMembership?.membershipType === 'PT_PACKAGE' && activeMembership && (
+          <div className="baseline-section">
+            <h3 className="baseline-section-title">프로그램 기준 수치</h3>
+            <div className="baseline-fields">
+              <Input
+                label="시작 수치"
+                type="number"
+                placeholder="0"
+                value={startValue === '' ? '' : startValue}
+                onChange={(e) => setStartValue(e.target.value === '' ? '' : Number(e.target.value))}
+                min={0}
+                step="0.1"
+              />
+              <Input
+                label="현재 수치"
+                type="number"
+                placeholder="0"
+                value={currentValue === '' ? '' : currentValue}
+                onChange={(e) => setCurrentValue(e.target.value === '' ? '' : Number(e.target.value))}
+                min={0}
+                step="0.1"
+              />
+            </div>
+          </div>
+        )}
+
+        <div className="baseline-section">
+          <h3 className="baseline-section-title">Strength (근력) 1RM</h3>
+          <div className="baseline-fields">
+            <Input
+              label="벤치프레스 (kg)"
+              type="number"
+              placeholder="0 (선택)"
+              value={benchPress1RM}
+              onChange={(e) => setBenchPress1RM(e.target.value === '' ? '' : Number(e.target.value))}
+              min={0}
+              step="0.1"
+            />
+            <Input
+              label="스쿼트 (kg)"
+              type="number"
+              placeholder="0 (선택)"
+              value={squat1RM}
+              onChange={(e) => setSquat1RM(e.target.value === '' ? '' : Number(e.target.value))}
+              min={0}
+              step="0.1"
+            />
+            <Input
+              label="데드리프트 (kg)"
+              type="number"
+              placeholder="0 (선택)"
+              value={deadlift1RM}
+              onChange={(e) => setDeadlift1RM(e.target.value === '' ? '' : Number(e.target.value))}
+              min={0}
+              step="0.1"
+            />
+          </div>
+        </div>
+
+        <div className="baseline-actions">
+          <Button variant="primary" onClick={handleSave} isLoading={isLoading}>
+            저장
+          </Button>
+        </div>
+      </div>
+    </Card>
   )
 }

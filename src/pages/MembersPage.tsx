@@ -1,8 +1,8 @@
-import { useState, useCallback, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { Plus, Flame, Dumbbell, HeartPulse, TrendingUp } from 'lucide-react'
 import { membersService } from '@/services/members.service'
-import { Layout, Card, Button, Loading, ErrorMessage, SearchInput, StatusBadge } from '@/components'
+import { Layout, Card, Button, Loading, ErrorMessage, SearchInput, StatusBadge, NewMemberModal } from '@/components'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import { useSearch } from '@/hooks/useSearch'
 import { formatDate } from '@/utils/dateFormatter'
@@ -11,8 +11,18 @@ import './MembersPage.css'
 
 export function MembersPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [page, setPage] = useState(1)
   const pageSize = 10
+  const [showNewMemberModal, setShowNewMemberModal] = useState(false)
+
+  // /members/new 진입 시 모달 열기 (리다이렉트 후 state로 열림)
+  useEffect(() => {
+    if (location.state?.openNewMemberModal) {
+      setShowNewMemberModal(true)
+      navigate('/members', { replace: true, state: {} })
+    }
+  }, [location.state?.openNewMemberModal, navigate])
 
   const fetchMembers = useCallback(() => {
     return membersService.getAll(page, pageSize)
@@ -104,7 +114,7 @@ export function MembersPage() {
       <div className="members-page">
         <div style={{ marginBottom: 'var(--spacing-lg)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h2 className="section-title">회원 목록</h2>
-          <Button variant="primary" onClick={() => navigate('/members/new')}>
+          <Button variant="primary" onClick={() => setShowNewMemberModal(true)}>
             <Plus size={20} />
             회원 추가
           </Button>
@@ -187,6 +197,12 @@ export function MembersPage() {
             </div>
           )}
         </Card>
+
+        <NewMemberModal
+          isOpen={showNewMemberModal}
+          onClose={() => setShowNewMemberModal(false)}
+          onSuccess={refetch}
+        />
       </div>
     </Layout>
   )
