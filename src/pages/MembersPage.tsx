@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Plus, TrendingUp, AlertCircle, Clock, ChevronRight } from 'lucide-react'
+import { Plus, Users, UserCheck, ChevronRight } from 'lucide-react'
 import { insightsService } from '@/services/insights.service'
 import { Layout, Card, Button, Loading, ErrorMessage, PageHeader, SearchInput, StatusBadge, NewMemberModal } from '@/components'
 import { useAsyncData } from '@/hooks/useAsyncData'
@@ -66,7 +66,7 @@ export function MembersPage() {
       <div className="members-page">
         <PageHeader
           title="회원 관리"
-          subtitle="센터 현황과 회원 목록을 한 곳에서 확인하세요."
+          subtitle="회원 등록, 수정, 상세 진입 등 운영 작업을 수행하세요."
           actions={
             <Button variant="primary" onClick={() => setShowNewMemberModal(true)}>
               <Plus size={20} />
@@ -78,7 +78,7 @@ export function MembersPage() {
         <div className="summary-cards">
           <Card className="summary-card">
             <div className="summary-icon">
-              <TrendingUp size={24} />
+              <Users size={24} />
             </div>
             <div className="summary-content">
               <div className="summary-label">전체 회원</div>
@@ -87,7 +87,7 @@ export function MembersPage() {
           </Card>
           <Card className="summary-card">
             <div className="summary-icon">
-              <TrendingUp size={24} />
+              <UserCheck size={24} />
             </div>
             <div className="summary-content">
               <div className="summary-label">활동 회원</div>
@@ -95,30 +95,12 @@ export function MembersPage() {
             </div>
           </Card>
           <Card className="summary-card">
-            <div className="summary-icon">
-              <TrendingUp size={24} />
-            </div>
-            <div className="summary-content">
-              <div className="summary-label">평균 달성률</div>
-              <div className="summary-value">{data.summary.averageProgress}%</div>
-            </div>
-          </Card>
-          <Card className="summary-card">
-            <div className="summary-icon danger">
-              <AlertCircle size={24} />
-            </div>
-            <div className="summary-content">
-              <div className="summary-label">위험(Red) 회원</div>
-              <div className="summary-value">{data.summary.riskCounts.red}명</div>
-            </div>
-          </Card>
-          <Card className="summary-card">
             <div className="summary-icon warning">
-              <Clock size={24} />
+              <Users size={24} />
             </div>
             <div className="summary-content">
-              <div className="summary-label">미입력 측정 데이터</div>
-              <div className="summary-value">{data.summary.missingMeasurements}건</div>
+              <div className="summary-label">비활동 회원</div>
+              <div className="summary-value">{Math.max(0, data.summary.totalMembers - data.summary.activeMembers)}명</div>
             </div>
           </Card>
         </div>

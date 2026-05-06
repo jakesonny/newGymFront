@@ -15,7 +15,7 @@ export function Sidebar() {
 
   // 대시보드 → 회원 관리 → 레벨 측정기
   const navItems = [
-    { path: '/dashboard', icon: LayoutDashboard, label: '대시보드', requireRole: 'TRAINER' },
+    { path: '/dashboard', icon: LayoutDashboard, label: '센터현황', requireRole: 'TRAINER' },
     { path: '/members', icon: Users, label: '회원 관리', requireRole: 'TRAINER' },
     { path: '/strength-level', icon: Dumbbell, label: '레벨 측정기' },
   ]

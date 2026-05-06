@@ -10,19 +10,51 @@ export const insightsService = {
 
   async getWeeklySummary() {
     const response = await api.get<ApiResponse<{
-      thisWeek: { count: number; average: number }
-      lastWeek: { count: number; average: number }
-      change: number
+      thisWeek: {
+        strengthScore: number
+        cardioScore: number
+        enduranceScore: number
+        bodyScore: number
+        stabilityScore: number
+        totalScore: number
+      }
+      lastWeek: {
+        strengthScore: number
+        cardioScore: number
+        enduranceScore: number
+        bodyScore: number
+        stabilityScore: number
+        totalScore: number
+      }
+      changes: {
+        strengthScore: number
+        cardioScore: number
+        enduranceScore: number
+        bodyScore: number
+        stabilityScore: number
+        totalScore: number
+      }
+      percentageChange: {
+        strengthScore: number
+        cardioScore: number
+        enduranceScore: number
+        bodyScore: number
+        stabilityScore: number
+        totalScore: number
+      }
     }>>('/insights/weekly-summary')
     return extractApiData(response, '주간 요약 데이터를 불러올 수 없습니다.')
   },
 
   async getRiskMembers() {
     const response = await api.get<ApiResponse<Array<{
-      id: string
-      name: string
-      riskStatus: 'FOUNDATION' | 'GREEN' | 'YELLOW' | 'RED'
-      reason: string
+      memberId: string
+      memberName: string
+      riskType: 'DECLINE' | 'INJURY' | 'INACTIVE'
+      description: string
+      currentScore?: number
+      previousScore?: number
+      declinePercentage?: number
     }>>>('/insights/risk-members')
     return extractApiData(response, '위험 회원 목록을 불러올 수 없습니다.')
   },

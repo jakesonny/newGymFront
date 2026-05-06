@@ -5,10 +5,10 @@ import './AppHeader.css'
 
 // 라우트 경로 → 페이지 제목 매핑
 const routeTitles: Record<string, string> = {
-  '/dashboard': '대시보드',
+  '/dashboard': '센터현황',
   '/members': '회원 관리',
   '/members/new': '신규 회원 등록',
-  '/center-dashboard': '대시보드',
+  '/center-dashboard': '센터현황',
   '/strength-level': '레벨 측정기',
   '/mypage': '마이페이지',
 }
@@ -29,7 +29,7 @@ const getPageTitle = (pathname: string): string => {
     return '회원 상세'
   }
 
-  return '대시보드' // 기본값
+  return '센터현황' // 기본값
 }
 
 export function AppHeader() {

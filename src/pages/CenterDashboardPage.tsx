@@ -1,41 +1,58 @@
 import { useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { TrendingUp, AlertCircle, Clock, ChevronRight } from 'lucide-react'
+import { TrendingUp, AlertCircle, Activity, ChevronRight } from 'lucide-react'
 import { insightsService } from '@/services/insights.service'
-import { Layout, Card, Loading, ErrorMessage, PageHeader, SearchInput, StatusBadge } from '@/components'
+import { Layout, Card, Loading, ErrorMessage, PageHeader, SearchInput } from '@/components'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import { useSearch } from '@/hooks/useSearch'
-import { getGoalLabel, getGoalIcon, getGoalClassName } from '@/utils/goalUtils'
 import type { CenterDashboard } from '@/types'
 import './CenterDashboardPage.css'
+
+interface CenterOverviewData {
+  center: CenterDashboard
+  riskMembers: Array<{
+    memberId: string
+    memberName: string
+    riskType: 'DECLINE' | 'INJURY' | 'INACTIVE'
+    description: string
+  }>
+  weeklySummary: {
+    thisWeek: { totalScore: number }
+    lastWeek: { totalScore: number }
+    changes: { totalScore: number }
+    percentageChange: { totalScore: number }
+  }
+}
 
 export function CenterDashboardPage() {
   const navigate = useNavigate()
 
-  const fetchCenterDashboard = useCallback(() => {
-    return insightsService.getCenterDashboard()
+  const fetchCenterOverview = useCallback(async (): Promise<CenterOverviewData> => {
+    const [center, riskMembers, weeklySummary] = await Promise.all([
+      insightsService.getCenterDashboard(),
+      insightsService.getRiskMembers(),
+      insightsService.getWeeklySummary(),
+    ])
+    return {
+      center,
+      riskMembers,
+      weeklySummary: {
+        thisWeek: { totalScore: weeklySummary.thisWeek.totalScore },
+        lastWeek: { totalScore: weeklySummary.lastWeek.totalScore },
+        changes: { totalScore: weeklySummary.changes.totalScore },
+        percentageChange: { totalScore: weeklySummary.percentageChange.totalScore },
+      },
+    }
   }, [])
 
-  const { data, isLoading, error, refetch } = useAsyncData<CenterDashboard>({
-    fetchFn: fetchCenterDashboard,
+  const { data, isLoading, error, refetch } = useAsyncData<CenterOverviewData>({
+    fetchFn: fetchCenterOverview,
   })
 
-  const { searchQuery, setSearchQuery, filteredData: filteredMembers } = useSearch({
-    data: data?.memberList || [],
-    searchFields: ['name'],
+  const { searchQuery, setSearchQuery, filteredData: filteredRisks } = useSearch({
+    data: data?.riskMembers || [],
+    searchFields: ['memberName', 'description'],
   })
-
-  // 진행도 계산 (D-남은일수)
-  const calculateDaysRemaining = useCallback((member: CenterDashboard['memberList'][0]) => {
-    if (!member.program?.endDate) return '-'
-    const endDate = new Date(member.program.endDate)
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    endDate.setHours(0, 0, 0, 0)
-    const diffTime = endDate.getTime() - today.getTime()
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    return diffDays >= 0 ? `D-${diffDays}` : `D+${Math.abs(diffDays)}`
-  }, [])
 
   if (isLoading) {
     return (
@@ -57,8 +74,8 @@ export function CenterDashboardPage() {
     <Layout>
       <div className="center-dashboard-page">
         <PageHeader
-          title="센터 대시보드"
-          subtitle="관리자님, 현재 운영 중인 타임박스 프로그램 현황입니다."
+          title="센터현황"
+          subtitle="운영 리스크와 주간 변화 신호를 우선 확인하세요."
         />
 
         <div className="summary-cards">
@@ -68,7 +85,7 @@ export function CenterDashboardPage() {
             </div>
             <div className="summary-content">
               <div className="summary-label">전체 회원</div>
-              <div className="summary-value">{data.summary.totalMembers}명</div>
+              <div className="summary-value">{data.center.summary.totalMembers}명</div>
             </div>
           </Card>
           <Card className="summary-card">
@@ -76,17 +93,20 @@ export function CenterDashboardPage() {
               <TrendingUp size={24} />
             </div>
             <div className="summary-content">
-              <div className="summary-label">활동 회원</div>
-              <div className="summary-value">{data.summary.activeMembers}명</div>
+              <div className="summary-label">위험 신호 회원</div>
+              <div className="summary-value">{data.riskMembers.length}명</div>
             </div>
           </Card>
           <Card className="summary-card">
-            <div className="summary-icon">
-              <TrendingUp size={24} />
+            <div className="summary-icon warning">
+              <Activity size={24} />
             </div>
             <div className="summary-content">
-              <div className="summary-label">평균 달성률</div>
-              <div className="summary-value">{data.summary.averageProgress}%</div>
+              <div className="summary-label">주간 총점 변화</div>
+              <div className="summary-value">
+                {data.weeklySummary.changes.totalScore >= 0 ? '+' : ''}
+                {data.weeklySummary.changes.totalScore}점
+              </div>
             </div>
           </Card>
           <Card className="summary-card">
@@ -95,25 +115,28 @@ export function CenterDashboardPage() {
             </div>
             <div className="summary-content">
               <div className="summary-label">위험(Red) 회원</div>
-              <div className="summary-value">{data.summary.riskCounts.red}명</div>
+              <div className="summary-value">{data.center.summary.riskCounts.red}명</div>
             </div>
           </Card>
           <Card className="summary-card">
-            <div className="summary-icon warning">
-              <Clock size={24} />
+            <div className="summary-icon">
+              <TrendingUp size={24} />
             </div>
             <div className="summary-content">
-              <div className="summary-label">미입력 측정 데이터</div>
-              <div className="summary-value">{data.summary.missingMeasurements}건</div>
+              <div className="summary-label">주간 변화율</div>
+              <div className="summary-value">
+                {data.weeklySummary.percentageChange.totalScore >= 0 ? '+' : ''}
+                {data.weeklySummary.percentageChange.totalScore}%
+              </div>
             </div>
           </Card>
         </div>
 
         <Card className="members-list-card">
           <div className="members-list-header">
-            <h2 className="section-title">회원 관리 리스트</h2>
+            <h2 className="section-title">위험 신호 회원 리스트</h2>
             <SearchInput
-              placeholder="회원명 검색..."
+              placeholder="회원명, 위험 사유 검색..."
               value={searchQuery}
               onChange={setSearchQuery}
             />
@@ -122,52 +145,25 @@ export function CenterDashboardPage() {
           <div className="members-table">
             <div className="table-header">
               <div className="table-cell">회원명</div>
-              <div className="table-cell">핵심 목표</div>
-              <div className="table-cell">프로그램</div>
-              <div className="table-cell">진행도</div>
-              <div className="table-cell">상태</div>
-              <div className="table-cell">성과 달성도</div>
+              <div className="table-cell">위험 유형</div>
+              <div className="table-cell">사유</div>
               <div className="table-cell"></div>
             </div>
 
-            {filteredMembers.length === 0 ? (
-              <div className="empty-state">회원이 없습니다.</div>
+            {filteredRisks.length === 0 ? (
+              <div className="empty-state">위험 신호 회원이 없습니다.</div>
             ) : (
-              filteredMembers.map((member) => (
+              filteredRisks.map((member) => (
                 <div
-                  key={member.id}
+                  key={member.memberId}
                   className="table-row"
-                  onClick={() => navigate(`/members/${member.id}`)}
+                  onClick={() => navigate(`/members/${member.memberId}`)}
                 >
-                  <div className="table-cell">{member.name}</div>
-                  <div className="table-cell goal-cell">
-                    {(() => {
-                      const goalType = member.program?.mainGoalType || null
-                      const Icon = getGoalIcon(goalType)
-                      return Icon ? <Icon size={18} className={`goal-icon ${getGoalClassName(goalType)}`} /> : null
-                    })()}
-                    <span>{getGoalLabel(member.program?.mainGoalType || null)}</span>
-                  </div>
+                  <div className="table-cell">{member.memberName}</div>
                   <div className="table-cell">
-                    {member.program?.durationWeeks ? `${member.program.durationWeeks}주` : '-'}
+                    {member.riskType === 'DECLINE' ? '능력 하락' : member.riskType === 'INJURY' ? '부상 위험' : '비활성'}
                   </div>
-                  <div className="table-cell">
-                    {calculateDaysRemaining(member)}
-                  </div>
-                  <div className="table-cell">
-                    <StatusBadge status={member.riskStatus} type="risk" showDot />
-                  </div>
-                  <div className="table-cell">
-                    <div className="progress-container">
-                      <div className="progress-bar-wrapper">
-                        <div
-                          className="progress-bar"
-                          style={{ width: `${member.program?.currentProgress || 0}%` }}
-                        />
-                      </div>
-                      <span className="progress-text">{member.program?.currentProgress || 0}%</span>
-                    </div>
-                  </div>
+                  <div className="table-cell">{member.description}</div>
                   <div className="table-cell arrow-cell">
                     <ChevronRight size={20} className="arrow-icon" />
                   </div>
