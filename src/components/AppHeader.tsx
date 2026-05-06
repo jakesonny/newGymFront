@@ -8,7 +8,7 @@ const routeTitles: Record<string, string> = {
   '/dashboard': '대시보드',
   '/members': '회원 관리',
   '/members/new': '신규 회원 등록',
-  '/center-dashboard': '센터 대시보드',
+  '/center-dashboard': '대시보드',
   '/strength-level': '레벨 측정기',
   '/mypage': '마이페이지',
 }

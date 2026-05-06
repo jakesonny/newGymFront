@@ -13,16 +13,16 @@ export function Sidebar() {
     navigate('/')
   }
 
-  // 대시보드 → 회원 관리 → 레벨 측정기 (센터 대시보드는 회원 관리 페이지에 통합됨)
+  // 대시보드 → 회원 관리 → 레벨 측정기
   const navItems = [
-    { path: '/dashboard', icon: LayoutDashboard, label: '대시보드' },
-    { path: '/members', icon: Users, label: '회원 관리', requireRole: 'ADMIN' },
+    { path: '/dashboard', icon: LayoutDashboard, label: '대시보드', requireRole: 'TRAINER' },
+    { path: '/members', icon: Users, label: '회원 관리', requireRole: 'TRAINER' },
     { path: '/strength-level', icon: Dumbbell, label: '레벨 측정기' },
   ]
 
   // 권한 필터링
   const filteredNavItems = navItems.filter((item) => {
-    if (item.requireRole && user?.role !== item.requireRole) {
+    if (item.requireRole && user?.role !== item.requireRole && user?.role !== 'ADMIN') {
       return false
     }
     return true

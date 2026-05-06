@@ -3,7 +3,6 @@ import { AuthProvider } from './contexts/AuthContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
-import { DashboardPage } from './pages/DashboardPage'
 import { MembersPage } from './pages/MembersPage'
 import { MemberDetailPage } from './pages/MemberDetailPage'
 import { GoalAnalystPage } from './pages/GoalAnalystPage'
@@ -21,8 +20,8 @@ function App() {
           <Route
             path="/dashboard"
             element={
-              <ProtectedRoute>
-                <DashboardPage />
+              <ProtectedRoute requireRole="TRAINER">
+                <CenterDashboardPage />
               </ProtectedRoute>
             }
           />
@@ -60,11 +59,7 @@ function App() {
           />
           <Route
             path="/center-dashboard"
-            element={
-              <ProtectedRoute requireRole="ADMIN">
-                <CenterDashboardPage />
-              </ProtectedRoute>
-            }
+            element={<Navigate to="/dashboard" replace />}
           />
           <Route
             path="/strength-level"

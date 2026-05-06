@@ -8,14 +8,14 @@ export function BottomTabBar() {
   const location = useLocation()
   const { user } = useAuth()
 
-  const navItems: Array<{ path: string; icon: LucideIcon; label: string; requireRole?: 'ADMIN' }> = [
-    { path: '/dashboard', icon: LayoutDashboard, label: '대시보드' },
-    { path: '/members', icon: Users, label: '회원 관리' },
+  const navItems: Array<{ path: string; icon: LucideIcon; label: string; requireRole?: 'TRAINER' }> = [
+    { path: '/dashboard', icon: LayoutDashboard, label: '대시보드', requireRole: 'TRAINER' },
+    { path: '/members', icon: Users, label: '회원', requireRole: 'TRAINER' },
     { path: '/strength-level', icon: Dumbbell, label: '레벨 측정기' },
   ]
 
   const filteredNavItems = navItems.filter((item) => {
-    if (item.requireRole && user?.role !== item.requireRole) return false
+    if (item.requireRole && user?.role !== item.requireRole && user?.role !== 'ADMIN') return false
     return true
   })
 
