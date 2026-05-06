@@ -186,13 +186,7 @@ export function NewMemberModal({ isOpen, onClose, onSuccess }: NewMemberModalPro
               </div>
               <div className="form-grid">
                 <Input label="회원 성함" placeholder="이름을 입력하세요" value={formData.name} onChange={(e) => handleChange('name', e.target.value)} required />
-                <div className="input-group">
-                  <label className="input-label">시작일 (Start Date) <span className="input-required">*</span></label>
-                  <div className="date-input-wrapper">
-                    <Input type="date" value={formData.joinDate} onChange={(e) => handleChange('joinDate', e.target.value)} required />
-                    <Calendar className="date-icon" size={20} />
-                  </div>
-                </div>
+                <Input label="생년월일" type="date" value={formData.birthDate} onChange={(e) => handleChange('birthDate', e.target.value)} />
                 <Input label="전화번호" placeholder="010-1234-5678" value={formData.phone} onChange={handlePhoneChange} required maxLength={13} />
                 <Input label="이메일" type="email" placeholder="email@example.com (선택사항)" value={formData.email || ''} onChange={(e) => handleChange('email', e.target.value || undefined)} helperText="이메일은 선택사항입니다." />
                 <div className="input-group">
@@ -208,7 +202,13 @@ export function NewMemberModal({ isOpen, onClose, onSuccess }: NewMemberModalPro
                     </label>
                   </div>
                 </div>
-                <Input label="생년월일" type="date" value={formData.birthDate} onChange={(e) => handleChange('birthDate', e.target.value)} />
+                <div className="input-group">
+                  <label className="input-label">시작일 (Start Date) <span className="input-required">*</span></label>
+                  <div className="date-input-wrapper">
+                    <Input type="date" value={formData.joinDate} onChange={(e) => handleChange('joinDate', e.target.value)} required />
+                    <Calendar className="date-icon" size={20} />
+                  </div>
+                </div>
                 <Input label="키 (cm)" type="number" placeholder="입력하세요" value={formData.height ?? ''} onChange={(e) => handleNumberChange('height', e)} min={1} step="0.1" />
                 <Input label="몸무게 (kg)" type="number" placeholder="입력하세요" value={formData.weight ?? ''} onChange={(e) => handleNumberChange('weight', e)} min={1} step="0.1" />
               </div>
