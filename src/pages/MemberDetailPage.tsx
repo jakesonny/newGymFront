@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Target, Heart, Activity, User } from 'lucide-react'
+import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer } from 'recharts'
 import { membersService } from '@/services/members.service'
 import { membershipsService } from '@/services/memberships.service'
 import { ptSessionsService } from '@/services/pt-sessions.service'
@@ -24,6 +25,11 @@ interface MemberDetailData {
 }
 
 export function MemberDetailPage() {
+  const formatKg = useCallback((value: number | null | undefined): string => {
+    if (value == null || Number.isNaN(value)) return '-'
+    return value.toFixed(2)
+  }, [])
+
   const { memberId } = useParams<{ memberId: string }>()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<DetailTab>('summary')
@@ -125,6 +131,19 @@ export function MemberDetailPage() {
       strength: h.lowerBodyStrength != null ? Math.round(h.lowerBodyStrength) : null,
       conditioning: conditioningValue,
     }
+  }, [data?.hexagonData])
+
+  const hexagonChartData = useMemo(() => {
+    if (!data?.hexagonData) return []
+    const h = data.hexagonData.indicators
+    return [
+      { subject: '하체 근력', value: h.lowerBodyStrength ?? 0 },
+      { subject: '심폐 지구력', value: h.cardiorespiratoryEndurance ?? 0 },
+      { subject: '근지구력', value: h.muscularEndurance ?? 0 },
+      { subject: '유연성', value: h.flexibility ?? 0 },
+      { subject: '체성분', value: h.bodyComposition ?? 0 },
+      { subject: '안정성', value: h.stability ?? 0 },
+    ]
   }, [data?.hexagonData])
 
   if (isLoading) {
@@ -256,8 +275,9 @@ export function MemberDetailPage() {
                 )}
                 {activeMembership?.targetValue && activeMembership?.targetUnit && (
                   <div className="goal-detail">
-                    목표: {activeMembership.targetValue}{activeMembership.targetUnit}
-                    {activeMembership.startValue && ` (시작: ${activeMembership.startValue}${activeMembership.targetUnit})`}
+                    목표: {formatKg(activeMembership.targetValue)}{activeMembership.targetUnit}
+                    {activeMembership.startValue != null &&
+                      ` (시작: ${formatKg(activeMembership.startValue)}${activeMembership.targetUnit})`}
                   </div>
                 )}
                 <div className="goal-progress">{goalInfo.goalProgress}% 달성</div>
@@ -275,15 +295,14 @@ export function MemberDetailPage() {
               <h2 className="section-title">능력치 분석</h2>
               {hexagonData ? (
                 <div className="hexagon-container">
-                  {/* 헥사곤 차트는 추후 구현 */}
-                  <div className="hexagon-placeholder">
-                    <div className="hexagon-label">하체 근력: {hexagonData.indicators.lowerBodyStrength ?? '—'}</div>
-                    <div className="hexagon-label">심폐 지구력: {hexagonData.indicators.cardiorespiratoryEndurance ?? '—'}</div>
-                    <div className="hexagon-label">근지구력: {hexagonData.indicators.muscularEndurance ?? '—'}</div>
-                    <div className="hexagon-label">유연성: {hexagonData.indicators.flexibility ?? '—'}</div>
-                    <div className="hexagon-label">체성분: {hexagonData.indicators.bodyComposition ?? '—'}</div>
-                    <div className="hexagon-label">안정성: {hexagonData.indicators.stability ?? '—'}</div>
-                  </div>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <RadarChart data={hexagonChartData}>
+                      <PolarGrid />
+                      <PolarAngleAxis dataKey="subject" />
+                      <PolarRadiusAxis angle={90} domain={[0, 100]} />
+                      <Radar dataKey="value" stroke="#ff7a00" fill="#ff7a00" fillOpacity={0.35} />
+                    </RadarChart>
+                  </ResponsiveContainer>
                 </div>
               ) : (
                 <div className="hexagon-placeholder">
