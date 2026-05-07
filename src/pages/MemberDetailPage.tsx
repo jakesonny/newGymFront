@@ -78,25 +78,25 @@ export function MemberDetailPage() {
         if (exercise.current) {
           const exerciseName = exercise.exerciseName
           if (exerciseName.includes('벤치') || exerciseName.includes('Bench')) {
-            items.push({ label: 'BENCH', value: `${exercise.current.oneRepMax}kg` })
+            items.push({ label: 'BENCH', value: `${formatKg(exercise.current.oneRepMax)}kg` })
           } else if (exerciseName.includes('스쿼트') || exerciseName.includes('Squat')) {
-            items.push({ label: 'SQUAT', value: `${exercise.current.oneRepMax}kg` })
+            items.push({ label: 'SQUAT', value: `${formatKg(exercise.current.oneRepMax)}kg` })
           } else if (exerciseName.includes('데드') || exerciseName.includes('Deadlift')) {
-            items.push({ label: 'DEAD', value: `${exercise.current.oneRepMax}kg` })
+            items.push({ label: 'DEAD', value: `${formatKg(exercise.current.oneRepMax)}kg` })
           }
         }
       })
     }
     return items.length > 0 ? items : [{ label: '데이터 없음', value: '-' }]
-  }, [data?.oneRepMax])
+  }, [data?.oneRepMax, formatKg])
 
   const bodyItems = useMemo(() => {
     if (!data?.member) return [{ label: '데이터 없음', value: '-' }]
     const m = data.member
     const items: Array<{ label: string; value: string }> = []
-    if (m.weight != null) items.push({ label: '체중', value: `${m.weight}kg` })
+    if (m.weight != null) items.push({ label: '체중', value: `${formatKg(m.weight)}kg` })
     return items.length > 0 ? items : [{ label: '데이터 없음', value: '-' }]
-  }, [data?.member])
+  }, [data?.member, formatKg])
 
   const conditioningItems = useMemo(() => {
     if (!data?.hexagonData) return [{ label: '데이터 없음', value: '-' }]
@@ -196,6 +196,9 @@ export function MemberDetailPage() {
     goalTrainerComment: member.goalTrainerComment || goal?.trainerComment || null,
   }
 
+  // 프로그램 진행률을 최우선으로 사용 (없을 때만 기존 goalProgress 폴백)
+  const programProgress = activeMembership?.currentProgress ?? goalInfo.goalProgress
+
   const goalTypeLabel = (() => {
     const label = getGoalLabel(activeMembership?.mainGoalType ?? null)
     return label === '-' ? (goalInfo.goal || '목표 없음') : label
@@ -270,17 +273,21 @@ export function MemberDetailPage() {
               <div className="goal-info">
                 <div className="goal-label">MAIN GOAL</div>
                 <div className="goal-title">{goalTypeLabel}</div>
-                {goalInfo.goal && (
-                  <div className="goal-detail">{goalInfo.goal}</div>
-                )}
-                {activeMembership?.targetValue && activeMembership?.targetUnit && (
+                {activeMembership?.currentValue != null &&
+                  activeMembership?.targetValue != null &&
+                  activeMembership?.targetUnit && (
                   <div className="goal-detail">
+                    현재: {formatKg(activeMembership.currentValue)}{activeMembership.targetUnit}
+                    {' / '}
                     목표: {formatKg(activeMembership.targetValue)}{activeMembership.targetUnit}
                     {activeMembership.startValue != null &&
                       ` (시작: ${formatKg(activeMembership.startValue)}${activeMembership.targetUnit})`}
                   </div>
                 )}
-                <div className="goal-progress">{goalInfo.goalProgress}% 달성</div>
+                {!activeMembership?.targetValue && goalInfo.goal && (
+                  <div className="goal-detail">{goalInfo.goal}</div>
+                )}
+                <div className="goal-progress">{programProgress}% 달성</div>
                 {goalInfo.goalTrainerComment && (
                   <div className="goal-comment">{goalInfo.goalTrainerComment}</div>
                 )}
