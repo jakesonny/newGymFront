@@ -34,17 +34,6 @@ export function MembersPage() {
     searchFields: ['name', 'phone'],
   })
 
-  const calculateDaysRemaining = useCallback((member: CenterDashboard['memberList'][0]) => {
-    if (!member.program?.endDate) return '-'
-    const endDate = new Date(member.program.endDate)
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    endDate.setHours(0, 0, 0, 0)
-    const diffTime = endDate.getTime() - today.getTime()
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    return diffDays >= 0 ? `D-${diffDays}` : `D+${Math.abs(diffDays)}`
-  }, [])
-
   if (isLoading) {
     return (
       <Layout>
@@ -142,12 +131,18 @@ export function MembersPage() {
                       const Icon = getGoalIcon(goalType)
                       return Icon ? <Icon size={18} className={`goal-icon ${getGoalClassName(goalType)}`} /> : null
                     })()}
-                    <span>{getGoalLabel(member.program?.mainGoalType || null)}</span>
+                    <span>
+                      {member.program
+                        ? (member.program.mainGoal || getGoalLabel(member.program.mainGoalType || null))
+                        : '-'}
+                    </span>
                   </div>
                   <div className="table-cell">
                     {member.program?.durationWeeks ? `${member.program.durationWeeks}주` : '-'}
                   </div>
-                  <div className="table-cell">{calculateDaysRemaining(member)}</div>
+                  <div className="table-cell">
+                    {member.program ? `${member.program.currentProgress || 0}%` : '-'}
+                  </div>
                   <div className="table-cell">
                     <StatusBadge status={member.riskStatus} type="risk" showDot />
                   </div>
