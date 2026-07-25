@@ -62,7 +62,7 @@ export function RegisterPage() {
         <Card className="register-card">
           <form onSubmit={handleSubmit} className="register-form">
             {error && <ErrorMessage message={error} />}
-            
+
             <Input
               type="text"
               name="name"
@@ -77,7 +77,7 @@ export function RegisterPage() {
               type="text"
               name="email"
               label="이메일"
-              placeholder="이메일을 입력하세요 (개발용: qwer 등 허용)"
+              placeholder="이메일을 입력하세요"
               value={formData.email}
               onChange={handleChange}
               required
@@ -106,7 +106,13 @@ export function RegisterPage() {
               autoComplete="new-password"
             />
 
-            <Button type="submit" variant="primary" size="lg" isLoading={isLoading} className="register-button">
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              isLoading={isLoading}
+              className="register-button"
+            >
               회원가입
             </Button>
 

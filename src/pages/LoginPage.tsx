@@ -42,11 +42,11 @@ export function LoginPage() {
         <Card className="login-card">
           <form onSubmit={handleSubmit} className="login-form">
             {error && <ErrorMessage message={error} />}
-            
+
             <Input
               type="text"
               label="이메일"
-              placeholder="이메일을 입력하세요 (개발용: qwer 등 허용)"
+              placeholder="이메일을 입력하세요"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -63,7 +63,13 @@ export function LoginPage() {
               autoComplete="current-password"
             />
 
-            <Button type="submit" variant="primary" size="lg" isLoading={isLoading} className="login-button">
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              isLoading={isLoading}
+              className="login-button"
+            >
               로그인
             </Button>
 
