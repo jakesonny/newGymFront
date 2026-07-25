@@ -37,3 +37,5 @@ build
 # Markdown
 *.md
 !README.md
+.vercel
+.env*
