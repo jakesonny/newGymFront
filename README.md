@@ -1,140 +1,101 @@
-# 헬스장 회원관리 시스템 - 프론트엔드
+# 헬스장 회원관리 시스템 — 프론트엔드
 
-헬스장 회원의 신체 능력을 수치화·평균화·시각화하고 시간에 따른 변화를 추적하는 데이터 기반 헬스 관리 시스템의 프론트엔드입니다.
+헬스장 회원의 신체 능력을 수치화·시각화하고 시간에 따른 변화를 추적하는 PT 관리 시스템의 프론트엔드입니다. [백엔드(NestJS + TypeORM)](https://github.com/jakesonny/newGym)와 REST API로 통신합니다.
+
+## 주요 기능
+
+- **인증**: JWT 기반 로그인/회원가입, 카카오 소셜 로그인, 역할(관리자/트레이너) 기반 라우팅 보호
+- **회원 관리**: 회원 목록/상세, 3단계 위저드 등록, 회원 대시보드
+- **체력평가 시각화**: 6영역(근력·심폐·근지구력·유연성·체성분·안정성) 레이더 차트, 평가 히스토리·비교
+- **운동 기록 & 근력 분석**: 운동 기록 입력, 1RM 추정치, 볼륨/근력 추세 그래프(Recharts)
+- **목표 분석**: 진행률 추적, 정체/급변 상태 표시
+- **센터 대시보드**: 트레이너 전용 — 회원 평균, 위험 회원 목록
 
 ## 기술 스택
 
-- **React** - UI 라이브러리
-- **TypeScript** - 타입 안정성
-- **Vite** - 빌드 도구
-- **React Router** - 라우팅
-- **Axios** - HTTP 클라이언트
+| 구분        | 기술                                             |
+| ----------- | ------------------------------------------------ |
+| Framework   | React 18 + TypeScript                            |
+| Build Tool  | Vite                                             |
+| Routing     | React Router v6                                  |
+| 상태 관리   | React Context + Custom Hooks (`useAsyncData` 등) |
+| HTTP Client | Axios                                            |
+| 시각화      | Recharts                                         |
+| 아이콘      | lucide-react                                     |
+| 배포        | Vercel                                           |
 
 ## 프로젝트 구조
 
 ```
 src/
-├── components/          # 재사용 가능한 컴포넌트
-├── pages/               # 페이지 컴포넌트
-├── hooks/               # 커스텀 훅
-├── services/            # API 서비스
-├── utils/               # 유틸리티 함수
-├── types/               # TypeScript 타입 정의
-├── contexts/            # React Context
-├── styles/              # 전역 스타일
-├── App.tsx              # 루트 컴포넌트
-└── main.tsx             # 애플리케이션 진입점
+├── components/          # 재사용 컴포넌트 (ProtectedRoute 등)
+├── pages/                # 라우트 단위 페이지
+├── hooks/                # 커스텀 훅 (useAsyncData, useSearch 등)
+├── services/             # 백엔드 API 호출 모듈 (도메인별로 분리)
+├── contexts/             # AuthContext (인증 상태)
+├── utils/                # 포맷터, 검증 등 유틸리티
+├── types/                # 공통 타입 정의
+├── App.tsx               # 라우트 정의
+└── main.tsx              # 진입점
 ```
 
-## 설치 및 실행
+## 로컬 실행
 
 ### 사전 요구사항
 
-- **Node.js** v18 이상
-- **npm** 또는 **yarn**
+- Node.js 18+
+- 로컬 또는 배포된 백엔드 API 서버
 
-### 1. 의존성 설치
+### 1. 의존성 설치 및 환경 변수 설정
 
 ```bash
 npm install
-```
-
-### 2. 환경 변수 설정
-
-`.env.example` 파일을 복사하여 `.env` 파일을 생성하세요:
-
-```bash
-# Windows
-copy .env.example .env
-
-# Linux/Mac
 cp .env.example .env
 ```
 
-그 다음 `.env` 파일을 열어 실제 환경에 맞게 값을 수정하세요:
+`.env`에서 백엔드 API 주소를 설정한다 (Vite 환경 변수는 `VITE_` 접두사 필수):
 
-- `VITE_API_BASE_URL`: 백엔드 API 기본 URL
-  - 로컬 개발: `http://localhost:3001`
-  - 프로덕션: Render로 배포한 백엔드 URL (예: `https://your-backend.onrender.com`)
+```env
+VITE_API_BASE_URL=http://localhost:3001
+```
 
-**참고**: 
-- `.env` 파일은 로컬 개발용입니다
-- 프로덕션 빌드 시 Vercel 환경 변수 또는 `.env.production` 파일이 사용됩니다
-- 환경 변수는 `VITE_` 접두사가 필요합니다 (Vite 요구사항)
-- **프론트엔드와 백엔드는 별도로 배포되며, 직접적인 import/export는 사용하지 않습니다**
-
-### 3. 애플리케이션 실행
+### 2. 개발 서버 실행
 
 ```bash
-# 개발 모드
 npm run dev
+# http://localhost:3000
+```
 
-# 프로덕션 빌드
-npm run build
+### 3. 빌드 / 미리보기
 
-# 프로덕션 미리보기
+```bash
+npm run build     # dist/ 에 빌드 결과물 생성
 npm run preview
 ```
 
-개발 서버는 기본적으로 `http://localhost:3000`에서 실행됩니다.
+## 라우트
 
-## 주요 기능
+| 경로                              | 설명            | 접근 권한 |
+| --------------------------------- | --------------- | :-------: |
+| `/login`, `/register`             | 로그인/회원가입 |  Public   |
+| `/dashboard`                      | 센터 대시보드   |  TRAINER  |
+| `/members`                        | 회원 목록       |   ADMIN   |
+| `/members/:memberId`              | 회원 상세       | 인증 필요 |
+| `/members/:memberId/goal-analyst` | 목표 분석       | 인증 필요 |
+| `/strength-level`                 | 빅3 레벨 측정기 |  Public   |
+| `/mypage`                         | 마이페이지      | 인증 필요 |
 
-### 인증
-- 로그인/로그아웃
-- JWT 토큰 관리
-- 카카오 소셜 로그인
+## 배포
 
-### 회원 관리
-- 회원 목록 조회
-- 회원 상세 정보
-- 회원 등록/수정/삭제
-- 회원 대시보드
+- **프론트엔드**: Vercel (`vercel.json`의 SPA rewrite 설정 포함)
+- **백엔드**: 별도 서버로 배포되며 프론트와는 HTTP API로만 통신한다(직접 import 없음)
+- Vercel 환경 변수에 `VITE_API_BASE_URL`을 배포된 백엔드 URL로 설정한다
 
-### 평가 시스템
-- 초기 평가 입력
-- 정기 평가 입력
-- 능력치 레이더 차트 시각화
-- 평가 히스토리 조회
+## 코드 스타일
 
-### 운동 기록
-- 운동 기록 입력
-- 운동 기록 조회
-- 볼륨 분석
-- 근력 진행 상황
-
-### 분석 및 인사이트
-- 센터 대시보드
-- 위험 회원 목록
-- 목표 분석
-
-## 개발 가이드
-
-### 코드 스타일
-
-- TypeScript 사용
-- camelCase 네이밍 (변수, 함수)
-- PascalCase 네이밍 (컴포넌트, 타입)
-- 함수형 컴포넌트 및 Hooks 사용
-
-### API 통신
-
-모든 API 호출은 `src/services` 디렉토리의 서비스 파일을 통해 이루어집니다.
-
-```typescript
-import { memberService } from '@/services/member.service'
-
-const members = await memberService.getMembers()
-```
-
-### 라우팅
-
-React Router를 사용하여 라우팅을 관리합니다.
-
-```typescript
-<Route path="/members" element={<MemberList />} />
-<Route path="/members/:id" element={<MemberDetail />} />
-```
+- TypeScript, 함수형 컴포넌트 + Hooks
+- camelCase(변수/함수), PascalCase(컴포넌트/타입)
+- 모든 API 호출은 `src/services`의 도메인별 서비스 모듈을 통해 이루어진다
 
 ## 라이선스
 
