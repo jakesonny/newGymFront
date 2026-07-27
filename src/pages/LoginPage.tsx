@@ -112,7 +112,7 @@ export function LoginPage() {
               className="login-demo-button"
             >
               <Sparkles size={18} />
-              데모 관리자 계정으로 둘러보기
+              회원가입 없이 데모로 둘러보기
             </Button>
             <p className="login-demo-hint">
               회원가입 없이 admin 계정으로 바로 대시보드를 체험할 수 있습니다.
