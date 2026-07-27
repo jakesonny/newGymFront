@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button, Input, Card, ErrorMessage } from '@/components'
 import { getErrorMessage } from '@/utils/errorHandler'
+import { getHomeRouteForRole } from '@/utils/roleHome'
 import './RegisterPage.css'
 
 export function RegisterPage() {
@@ -39,8 +40,8 @@ export function RegisterPage() {
     setIsLoading(true)
 
     try {
-      await register(formData.email, formData.password, formData.name)
-      navigate('/dashboard')
+      const registeredUser = await register(formData.email, formData.password, formData.name)
+      navigate(getHomeRouteForRole(registeredUser.role))
     } catch (err) {
       setError(getErrorMessage(err, '회원가입에 실패했습니다.'))
     } finally {

@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider } from './contexts/AuthContext'
+import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import { getHomeRouteForRole } from './utils/roleHome'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { MembersPage } from './pages/MembersPage'
@@ -9,6 +10,21 @@ import { GoalAnalystPage } from './pages/GoalAnalystPage'
 import { CenterDashboardPage } from './pages/CenterDashboardPage'
 import { StrengthLevelPage } from './pages/StrengthLevelPage'
 import { MyPage } from './pages/MyPage'
+
+/** 루트("/") 진입 시 로그인 여부·역할에 따라 알맞은 화면으로 보낸다. */
+function HomeRedirect() {
+  const { isAuthenticated, isLoading, user } = useAuth()
+
+  if (isLoading) {
+    return null
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />
+  }
+
+  return <Navigate to={getHomeRouteForRole(user?.role)} replace />
+}
 
 function App() {
   return (
@@ -57,14 +73,8 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/center-dashboard"
-            element={<Navigate to="/dashboard" replace />}
-          />
-          <Route
-            path="/strength-level"
-            element={<StrengthLevelPage />}
-          />
+          <Route path="/center-dashboard" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/strength-level" element={<StrengthLevelPage />} />
           <Route
             path="/mypage"
             element={
@@ -73,7 +83,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/" element={<HomeRedirect />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

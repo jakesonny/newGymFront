@@ -54,10 +54,40 @@
   gap: var(--spacing-lg);
 }
 
-
 .login-button {
   width: 100%;
   margin-top: var(--spacing-md);
+}
+
+.login-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  margin: var(--spacing-sm) 0;
+}
+
+.login-divider::before,
+.login-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.login-divider span {
+  padding: 0 var(--spacing-md);
+}
+
+.login-demo-button {
+  width: 100%;
+}
+
+.login-demo-hint {
+  text-align: center;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  margin-top: calc(-1 * var(--spacing-sm));
 }
 
 .login-footer {

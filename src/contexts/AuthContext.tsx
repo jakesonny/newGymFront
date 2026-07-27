@@ -6,8 +6,8 @@ interface AuthContextType {
   user: AuthResponse['user'] | null
   isAuthenticated: boolean
   isLoading: boolean
-  login: (email: string, password: string) => Promise<void>
-  register: (email: string, password: string, name: string) => Promise<void>
+  login: (email: string, password: string) => Promise<AuthResponse['user']>
+  register: (email: string, password: string, name: string) => Promise<AuthResponse['user']>
   logout: () => Promise<void>
   updateUser: (user: AuthResponse['user']) => void
 }
@@ -34,11 +34,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (email: string, password: string) => {
     const response = await authService.login({ email, password })
     setUser(response.user)
+    return response.user
   }, [])
 
   const register = useCallback(async (email: string, password: string, name: string) => {
     const response = await authService.register({ email, password, name })
     setUser(response.user)
+    return response.user
   }, [])
 
   const logout = useCallback(async () => {
