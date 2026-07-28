@@ -112,11 +112,9 @@ export function LoginPage() {
               className="login-demo-button"
             >
               <Sparkles size={18} />
-              회원가입 없이 데모로 둘러보기
+              회원가입 없이 둘러보기
             </Button>
-            <p className="login-demo-hint">
-              회원가입 없이 admin 계정으로 바로 대시보드를 체험할 수 있습니다.
-            </p>
+            <p className="login-demo-hint">회원가입 없이 체험해 볼 수 있습니다.</p>
 
             <div className="login-footer">
               <span>계정이 없으신가요?</span>
