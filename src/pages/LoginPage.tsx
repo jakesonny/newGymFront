@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Sparkles } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
@@ -13,8 +13,21 @@ export function LoginPage() {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isDemoLoading, setIsDemoLoading] = useState(false)
+  const [showColdStartHint, setShowColdStartHint] = useState(false)
   const { login } = useAuth()
   const navigate = useNavigate()
+
+  // Render 무료 티어 콜드스타트로 로그인이 오래 걸릴 수 있어, 4초 넘게 대기 중이면
+  // "화면이 멈췄다"는 오해를 막기 위해 안내 문구를 띄운다. 요청이 끝나면 즉시 정리한다.
+  useEffect(() => {
+    const isPending = isLoading || isDemoLoading
+    if (!isPending) return
+    const timer = setTimeout(() => setShowColdStartHint(true), 4000)
+    return () => {
+      clearTimeout(timer)
+      setShowColdStartHint(false)
+    }
+  }, [isLoading, isDemoLoading])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -97,6 +110,7 @@ export function LoginPage() {
             >
               로그인
             </Button>
+            {showColdStartHint && <p className="login-demo-hint">서버를 깨우는 중입니다.</p>}
 
             <div className="login-divider">
               <span>또는</span>
